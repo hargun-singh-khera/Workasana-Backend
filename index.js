@@ -95,13 +95,28 @@ app.get("/auth/me", verfiyJWT, async (req, res) => {
     }
 })
 
+// get all users
+async function getUsers () {
+    try {
+        const users = await User.find()
+        return users
+    } catch (error) {
+        throw error
+    }
+}
+
+app.get("/users", verfiyJWT, async (req, res) => {
+    try {
+        const users = await getUsers()
+        return res.status(200).json({ message: "Users fetched successfully", users })        
+    } catch (error) {
+        return res.status(500).json({ error: "Failed to fetch users "})
+    }
+})
+
 // create new task
 async function createTask(data) {
     try {
-        const { name, project, team, owners, tags, timeToComplete, status } = data
-        if(!name || !project || !team || !Array.isArray(owners) || !owners.length || timeToComplete === null || !status) {
-            return res.status(400).json({ message: "All fields are required "})
-        }
         const task = new Task(data)
         await task.save()
         return task
@@ -112,11 +127,15 @@ async function createTask(data) {
 
 app.post("/tasks", verfiyJWT, async (req, res) => {
     try {
+        const { name, project, team, owners, tags, dueDate, timeToComplete } = req.body
+        if(!name || !project || !team || !dueDate || !Array.isArray(owners) || owners.length === 0 || !Array.isArray(tags) || tags.length === 0 || timeToComplete === null) {
+            return res.status(400).json({ message: "All fields are required "})
+        }
         const task = await createTask(req.body)
         return res.status(201).json({ message: "Task created successfully", task })
     } catch (error) {
-        res.status(500).json({ error: "Failed to create task "})
-        // console.log("Error while creating task", error.message)
+        console.log("Error while creating task", error.message)
+        return res.status(500).json({ error: "Failed to create task "})
     }
 })
 

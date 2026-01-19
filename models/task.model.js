@@ -28,6 +28,10 @@ const taskSchema = new mongoose.Schema({
             ref: "Tag"
         }
     ],
+    dueDate: {
+        type: Date,
+        required: true,
+    },
     timeToComplete: {
         type: Number,
         required: true,
