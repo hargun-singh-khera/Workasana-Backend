@@ -8,7 +8,15 @@ const teamSchema = new mongoose.Schema({
     },
     description: {
         type: String,
-    }
+    },
+    members: [
+        {
+            name: {
+                type: String,
+                required: true,
+            }
+        }
+    ]
 })
 
 const Team = mongoose.model("Team", teamSchema)

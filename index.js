@@ -159,6 +159,24 @@ app.get("/tasks", verfiyJWT, async (req, res) => {
     }
 })
 
+async function getTasksByProject(projectId) {
+    try {
+        const tasks = await Task.find({ project: projectId }).populate("owners")
+        return tasks
+    } catch (error) {
+        throw error
+    }
+}
+
+app.get("/tasks/project/:projectId", verfiyJWT, async (req, res) => {
+    try {
+        const tasks = await getTasksByProject(req.params.projectId)
+        return res.status(200).json({ message: "Tasks fetched successfully", tasks })
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch tasks by project "})        
+    }
+})
+
 // update task
 async function updateTask(id, data) {
     try {
@@ -236,9 +254,38 @@ async function getTeams() {
 app.get("/teams", verfiyJWT, async (req, res) => {
     try {
         const teams = await getTeams()
-        return res.status(200).json({ message: "Teams fetched successfully", teams })
+        res.status(200).json({ message: "Teams fetched successfully", teams })
     } catch (error) {
         console.log("Error while getting teams", error.message)
+        res.status(500).json({ error: "Failed to fetch teams" })
+    }
+})
+
+async function addMember (teamId, name) {
+    console.log("teamId", teamId, "name", name)
+    try {
+        const team = await Team.findByIdAndUpdate(
+            teamId,
+            { $push: { members: { name } }},
+            { new: true, runValidators: true }
+        )
+        if(!team) {
+            res.status(400).json({ message: "Team not found" })
+        }
+        return team
+    } catch (error) {
+        throw error
+    }
+}
+
+app.post("/teams/:teamId/member", async (req, res) => {
+    try {
+        console.log("req.body.name", req.body.name)
+        const team = await addMember(req.params.teamId, req.body.name)
+        res.status(200).json({ message: "Member added to team successfully", team })
+    } catch (error) {
+        console.log("error", error)
+        res.status(500).json({ error: "Failed to add member to the team" })
     }
 })
 
@@ -286,6 +333,25 @@ app.get("/projects", verfiyJWT, async (req, res) => {
     }
 })
 
+async function getProjectDetails(projectId) {
+    try {
+        const project = await Project.findById(projectId)
+        return project
+    } catch (error) {
+        throw error        
+    }
+}
+
+app.get("/project/:projectId", verfiyJWT, async (req, res) => {
+    try {
+        const project = await getProjectDetails(req.params.projectId)
+        return res.status(200).json({ message: "Project fetched successfully", project })
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch project "})
+        // console.log("Error while getting projects", error.message)
+    }
+})
+
 // add tag
 async function addTag (data) {
     try {
@@ -328,21 +394,45 @@ app.get("/tags", verfiyJWT, async (req, res) => {
 })
 
 // reports
-// app.get("/report/last-week", async (req, res) => {
-//     try {
-        
-//     } catch (error) {
-        
-//     }
-// })
+async function getTasksCompletedLastWeek () {
+    try {
+        const sevenDaysAgo = new Date()
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+        const tasks = await Task.find({ status: "Completed", updatedAt: { $gte: sevenDaysAgo } })
+        return tasks
+    } catch (error) {
+        throw error
+    }
+}
 
-// app.get("/report/pending", async (req, res) => {
-//     try {
-        
-//     } catch (error) {
-        
-//     }
-// })
+app.get("/report/last-week", async (req, res) => {
+    try {
+        const tasks = await getTasksCompletedLastWeek()
+        res.status(200).json({ message: "Tasks completed last week fetched successfully", tasks: tasks.length })
+    } catch (error) {
+        res.status(500).json({ error: "Failed to get tasks completed last week" })        
+    }
+})
+
+async function getTotalDaysOfPendingWorkForAllTasks () {
+    try {
+        const pendingTasks = await Task.find({ status: { $ne: "Completed" }})
+        const totalDays = pendingTasks.reduce((acc, curr) => acc + curr.timeToComplete, 0)
+        return totalDays
+    } catch (error) {
+        throw error
+    }
+}
+
+app.get("/report/pending", async (req, res) => {
+    try {
+        const total = await getTotalDaysOfPendingWorkForAllTasks()
+        res.status(200).json({ message: "Total days of pending work fetched successfully", total })
+    } catch (error) {
+        res.status(500).json({ error: "Failed to get total days of pending work" })        
+    }
+})
+
 
 // app.get("/report/closed-tasks", async (req, res) => {
 //     try {

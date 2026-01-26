@@ -9,6 +9,11 @@ const projectSchema = new mongoose.Schema({
     description: {
         type: String,
     },
+    status: {
+        type: String,
+        enum: ["In Progress", "Completed"],
+        default: "In Progress"
+    }
 }, { timestamps: true })
 
 const Project = mongoose.model("Project", projectSchema)
