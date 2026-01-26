@@ -26,7 +26,7 @@ app.use(express.urlencoded({ extended: true }))
 app.use(cors(corsOptions))
 
 app.get("/", (req, res) => {
-    res.send("HELLO")
+    res.status(200).json({ message: "HELLO" })
 })
 
 const verfiyJWT = async (req, res, next) => {
