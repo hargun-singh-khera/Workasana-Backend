@@ -14,7 +14,7 @@ const Tag = require("./models/tag.model");
 const { connectDB } = require("./db/db.connect");
 
 const corsOptions = {
-    origin: "http://localhost:5173/",
+    origin: "http://localhost:5173",
     credentials: true,
 }
 
