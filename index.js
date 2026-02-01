@@ -14,8 +14,9 @@ const Tag = require("./models/tag.model");
 const { connectDB } = require("./db/db.connect");
 
 const corsOptions = {
-    origin: "http://localhost:5173",
+    origin: "*",
     credentials: true,
+    optionSuccessStatus: 200,
 }
 
 const JWT_SECRET = "jwt_secret";
@@ -146,7 +147,7 @@ app.post("/tasks", verfiyJWT, async (req, res) => {
 // get all tasks 
 async function getTasks() {
     try {
-        const tasks = await Task.find()
+        const tasks = await Task.find().populate("owners")
         return tasks
     } catch (error) {
         throw error
@@ -210,7 +211,7 @@ async function deleteTask(id) {
     }
 }
 
-app.delete("/tasks/:id", verfiyJWT, async (req, res) => {
+app.delete("/task/:id", verfiyJWT, async (req, res) => {
     try {
         await deleteTask(req.params.id) 
         return res.status(200).json({ message: "Task deleted successfully "})       
@@ -260,8 +261,26 @@ app.get("/teams", verfiyJWT, async (req, res) => {
         const teams = await getTeams()
         res.status(200).json({ message: "Teams fetched successfully", teams })
     } catch (error) {
-        console.log("Error while getting teams", error.message)
+        // console.log("Error while getting teams", error.message)
         res.status(500).json({ error: "Failed to fetch teams" })
+    }
+})
+
+// delete team
+async function deleteTeam (teamId) {
+    try {
+        await Team.findByIdAndDelete(teamId)        
+    } catch (error) {
+        throw error
+    }
+}
+
+app.delete("/team/:teamId", verfiyJWT, async (req, res) => {
+    try {
+        await deleteTeam(req.params.teamId)
+        res.status(200).json({ message: "Team deleted successfully" })
+    } catch (error) {
+        res.status(500).json({ error: "Failed to delete team" })
     }
 })
 
@@ -356,6 +375,24 @@ app.get("/project/:projectId", verfiyJWT, async (req, res) => {
     }
 })
 
+async function deleteProject(projectId) {
+    try {
+        await Project.findByIdAndDelete(projectId)
+    } catch (error) {
+        throw error
+    }
+}
+
+// delete project
+app.delete("/project/:projectId", verfiyJWT, async (req, res) => {
+    try {
+        await deleteProject(req.params.projectId)
+        res.status(200).json({ message: "Project deleted successfully" })
+    } catch (error) {
+        res.status(500).json({ error: "Failed to delete project "})
+    }
+})
+
 // add tag
 async function addTag (data) {
     try {
@@ -409,10 +446,22 @@ async function getTasksCompletedLastWeek () {
     }
 }
 
+async function getTasksPendingLastWeek () {
+    try {
+        const sevenDaysAgo = new Date()
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+        const tasks = await Task.find({ status: { $ne: "Completed" } , updatedAt: { $gte: sevenDaysAgo } })
+        return tasks
+    } catch (error) {
+        throw error
+    }
+}
+
 app.get("/report/last-week", async (req, res) => {
     try {
-        const tasks = await getTasksCompletedLastWeek()
-        res.status(200).json({ message: "Tasks completed last week fetched successfully", tasks: tasks.length })
+        const completedTasks = await getTasksCompletedLastWeek()
+        const pendingTasks = await getTasksPendingLastWeek()
+        res.status(200).json({ message: "Tasks completed last week fetched successfully", tasks: { completedTasks: completedTasks.length, pendingTasks: pendingTasks.length } })
     } catch (error) {
         res.status(500).json({ error: "Failed to get tasks completed last week" })        
     }
@@ -428,10 +477,21 @@ async function getTotalDaysOfPendingWorkForAllTasks () {
     }
 }
 
+async function getTotalDaysOfCompletedWorkForTasks() {
+    try {
+        const completedTasks = await Task.find({ status: { $eq: "Completed" }})
+        const totalDays = completedTasks.reduce((acc, curr) => acc + curr.timeToComplete, 0)
+        return totalDays
+    } catch (error) {
+        throw error
+    }
+}
+
 app.get("/report/pending", async (req, res) => {
     try {
-        const total = await getTotalDaysOfPendingWorkForAllTasks()
-        res.status(200).json({ message: "Total days of pending work fetched successfully", total })
+        const totalPendingDays = await getTotalDaysOfPendingWorkForAllTasks()
+        const totalCompletedDays = await getTotalDaysOfCompletedWorkForTasks()
+        res.status(200).json({ message: "Total days of pending work fetched successfully", total: { totalPendingDays, totalCompletedDays } })
     } catch (error) {
         res.status(500).json({ error: "Failed to get total days of pending work" })        
     }
