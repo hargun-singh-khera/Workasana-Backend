@@ -137,6 +137,7 @@ app.post("/tasks", verfiyJWT, async (req, res) => {
             return res.status(400).json({ message: "All fields are required "})
         }
         const task = await createTask(req.body)
+        await task.populate("owners")
         return res.status(201).json({ message: "Task created successfully", task })
     } catch (error) {
         console.log("Error while creating task", error.message)
@@ -224,9 +225,16 @@ app.delete("/task/:id", verfiyJWT, async (req, res) => {
 // add team
 async function addTeam(data) {
     try {
-        const { name } = data
+        const { name, members } = data
         if(!name) {
             return res.status(400).json({ message: "Name is required "})
+        }
+        const teamExists = await Team.findOne({ name })
+        if(teamExists) {
+            return res.status(409).json({ message: "Team already exists "})
+        }
+        if(!members || members.length === 0) {
+            return res.status(400).json({ message: "Members are required "})
         }
         const team = new Team(data)
         await team.save()
