@@ -165,6 +165,27 @@ app.get("/tasks", verfiyJWT, async (req, res) => {
     }
 })
 
+// get task by id 
+async function getTaskById(taskId) {
+    try {
+        console.log("taskId", taskId)
+        const tasks = await Task.findById(taskId).populate("project").populate("owners").populate("team").populate("tags")
+        return tasks
+    } catch (error) {
+        throw error
+    }
+}
+
+app.get("/task/:id", verfiyJWT, async (req, res) => {
+    try {
+        const task = await getTaskById(req.params.id)
+        return res.status(200).json({ task })
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch task data "})
+        // console.log("Error while getting tasks", error.message)
+    }
+})
+
 async function getTasksByProject(projectId) {
     try {
         const tasks = await Task.find({ project: projectId }).populate("owners")
@@ -186,14 +207,14 @@ app.get("/tasks/project/:projectId", verfiyJWT, async (req, res) => {
 // update task
 async function updateTask(id, data) {
     try {
-        const task = await Task.findByIdAndUpdate(id, data, { new: true })
+        const task = await Task.findByIdAndUpdate(id, data, { new: true }).populate("project").populate("owners").populate("team").populate("tags")
         return task
     } catch (error) {
         throw error        
     }
 }
 
-app.post("/tasks/:id", verfiyJWT, async (req, res) => {
+app.post("/task/:id", verfiyJWT, async (req, res) => {
     try {
         const task = await updateTask(req.params.id, req.body)
         return res.status(200).json({ message: "Task updated successfully", task })
