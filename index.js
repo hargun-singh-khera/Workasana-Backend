@@ -33,7 +33,7 @@ app.get("/", (req, res) => {
 const verfiyJWT = async (req, res, next) => {
     const token = req.headers["authorization"]
     console.log("token", token)
-    if(!token) {
+    if (!token) {
         return res.status(401).json({ message: "No token provided" })
     }
     try {
@@ -50,12 +50,12 @@ const verfiyJWT = async (req, res, next) => {
 app.post("/auth/signup", async (req, res) => {
     try {
         const { name, email, password } = req.body;
-        if(!name || !email || !password) {
-            return res.status(400).json({ message: "All fields are required "})
+        if (!name || !email || !password) {
+            return res.status(400).json({ message: "All fields are required " })
         }
         const userExists = await User.findOne({ email })
-        if(userExists) {
-            return res.status(409).json({ message: "User already exists "})
+        if (userExists) {
+            return res.status(409).json({ message: "User already exists " })
         }
         const user = new User({ name, email, password })
         await user.save()
@@ -70,21 +70,21 @@ app.post("/auth/signup", async (req, res) => {
 app.post("/auth/login", async (req, res) => {
     try {
         const { email, password } = req.body;
-        if(!email || !password) {
-            return res.status(400).json({ message: "All fields are required "})
+        if (!email || !password) {
+            return res.status(400).json({ message: "All fields are required " })
         }
         const user = await User.findOne({ email })
-        if(!user) {
-            return res.status(400).json({ message: "User not found "})
+        if (!user) {
+            return res.status(400).json({ message: "User not found " })
         }
-        if(password === user.password) {
-            const token = jwt.sign({ userId: user._id, email }, JWT_SECRET, { expiresIn: "1d"})
-            return res.status(200).json({ message: "User logged in successfully" , token })
+        if (password === user.password) {
+            const token = jwt.sign({ userId: user._id, email }, JWT_SECRET, { expiresIn: "1d" })
+            return res.status(200).json({ message: "User logged in successfully", token })
         } else {
             return res.status(400).json({ message: "Invalid credentials " })
         }
     } catch (error) {
-        res.status(500).json({ error: "Failed to login "})
+        res.status(500).json({ error: "Failed to login " })
         // console.log("Error while logging in user", error.message)
     }
 })
@@ -101,7 +101,7 @@ app.get("/auth/me", verfiyJWT, async (req, res) => {
 })
 
 // get all users
-async function getUsers () {
+async function getUsers() {
     try {
         const users = await User.find()
         return users
@@ -113,9 +113,9 @@ async function getUsers () {
 app.get("/users", verfiyJWT, async (req, res) => {
     try {
         const users = await getUsers()
-        return res.status(200).json({ message: "Users fetched successfully", users })        
+        return res.status(200).json({ message: "Users fetched successfully", users })
     } catch (error) {
-        return res.status(500).json({ error: "Failed to fetch users "})
+        return res.status(500).json({ error: "Failed to fetch users " })
     }
 })
 
@@ -133,15 +133,15 @@ async function createTask(data) {
 app.post("/tasks", verfiyJWT, async (req, res) => {
     try {
         const { name, project, team, owners, tags, dueDate, timeToComplete } = req.body
-        if(!name || !project || !team || !dueDate || !Array.isArray(owners) || owners.length === 0 || !Array.isArray(tags) || tags.length === 0 || timeToComplete === null) {
-            return res.status(400).json({ message: "All fields are required "})
+        if (!name || !project || !team || !dueDate || !Array.isArray(owners) || owners.length === 0 || !Array.isArray(tags) || tags.length === 0 || timeToComplete === null) {
+            return res.status(400).json({ message: "All fields are required " })
         }
         const task = await createTask(req.body)
         await task.populate("owners")
         return res.status(201).json({ message: "Task created successfully", task })
     } catch (error) {
         console.log("Error while creating task", error.message)
-        return res.status(500).json({ error: "Failed to create task "})
+        return res.status(500).json({ error: "Failed to create task " })
     }
 })
 
@@ -160,7 +160,7 @@ app.get("/tasks", verfiyJWT, async (req, res) => {
         const tasks = await getTasks()
         return res.status(200).json({ tasks })
     } catch (error) {
-        res.status(500).json({ error: "Failed to fetch tasks "})
+        res.status(500).json({ error: "Failed to fetch tasks " })
         // console.log("Error while getting tasks", error.message)
     }
 })
@@ -181,7 +181,7 @@ app.get("/task/:id", verfiyJWT, async (req, res) => {
         const task = await getTaskById(req.params.id)
         return res.status(200).json({ task })
     } catch (error) {
-        res.status(500).json({ error: "Failed to fetch task data "})
+        res.status(500).json({ error: "Failed to fetch task data " })
         // console.log("Error while getting tasks", error.message)
     }
 })
@@ -200,7 +200,7 @@ app.get("/tasks/project/:projectId", verfiyJWT, async (req, res) => {
         const tasks = await getTasksByProject(req.params.projectId)
         return res.status(200).json({ message: "Tasks fetched successfully", tasks })
     } catch (error) {
-        res.status(500).json({ error: "Failed to fetch tasks by project "})        
+        res.status(500).json({ error: "Failed to fetch tasks by project " })
     }
 })
 
@@ -210,7 +210,7 @@ async function updateTask(id, data) {
         const task = await Task.findByIdAndUpdate(id, data, { new: true }).populate("project").populate("owners").populate("team").populate("tags")
         return task
     } catch (error) {
-        throw error        
+        throw error
     }
 }
 
@@ -219,7 +219,7 @@ app.post("/task/:id", verfiyJWT, async (req, res) => {
         const task = await updateTask(req.params.id, req.body)
         return res.status(200).json({ message: "Task updated successfully", task })
     } catch (error) {
-        res.status(500).json({ error: "Failed to update task "})
+        res.status(500).json({ error: "Failed to update task " })
         // console.log("Error while updating task", error.message)
     }
 })
@@ -235,8 +235,8 @@ async function deleteTask(id) {
 
 app.delete("/task/:id", verfiyJWT, async (req, res) => {
     try {
-        await deleteTask(req.params.id) 
-        return res.status(200).json({ message: "Task deleted successfully "})       
+        await deleteTask(req.params.id)
+        return res.status(200).json({ message: "Task deleted successfully " })
     } catch (error) {
         res.status(500).json({ error: "Failed to delete task" })
         // console.log("Error while deleting task", error.message)
@@ -247,15 +247,15 @@ app.delete("/task/:id", verfiyJWT, async (req, res) => {
 async function addTeam(data) {
     try {
         const { name, members } = data
-        if(!name) {
-            return res.status(400).json({ message: "Name is required "})
+        if (!name) {
+            return res.status(400).json({ message: "Name is required " })
         }
         const teamExists = await Team.findOne({ name })
-        if(teamExists) {
-            return res.status(409).json({ message: "Team already exists "})
+        if (teamExists) {
+            return res.status(409).json({ message: "Team already exists " })
         }
-        if(!members || members.length === 0) {
-            return res.status(400).json({ message: "Members are required "})
+        if (!members || members.length === 0) {
+            return res.status(400).json({ message: "Members are required " })
         }
         const team = new Team(data)
         await team.save()
@@ -268,7 +268,7 @@ async function addTeam(data) {
 app.post("/teams", verfiyJWT, async (req, res) => {
     try {
         const team = await addTeam(req.body)
-        return res.status(201).json({ message: "Team created successfully", team })        
+        return res.status(201).json({ message: "Team created successfully", team })
     } catch (error) {
         res.status(500).json({ error: "Failed to create team" })
         // console.log("Error while creating team", error.message)
@@ -281,7 +281,7 @@ async function getTeams() {
         const teams = await Team.find()
         return teams
     } catch (error) {
-        throw error        
+        throw error
     }
 }
 
@@ -296,9 +296,9 @@ app.get("/teams", verfiyJWT, async (req, res) => {
 })
 
 // delete team
-async function deleteTeam (teamId) {
+async function deleteTeam(teamId) {
     try {
-        await Team.findByIdAndDelete(teamId)        
+        await Team.findByIdAndDelete(teamId)
     } catch (error) {
         throw error
     }
@@ -313,15 +313,15 @@ app.delete("/team/:teamId", verfiyJWT, async (req, res) => {
     }
 })
 
-async function addMember (teamId, name) {
+async function addMember(teamId, name) {
     console.log("teamId", teamId, "name", name)
     try {
         const team = await Team.findByIdAndUpdate(
             teamId,
-            { $push: { members: { name } }},
+            { $push: { members: { name } } },
             { new: true, runValidators: true }
         )
-        if(!team) {
+        if (!team) {
             res.status(400).json({ message: "Team not found" })
         }
         return team
@@ -345,14 +345,14 @@ app.post("/teams/:teamId/member", async (req, res) => {
 async function addProject(data) {
     try {
         const { name } = data
-        if(!name) {
-            return res.status(400).json({ message: "Name is required "})
+        if (!name) {
+            return res.status(400).json({ message: "Name is required " })
         }
         const project = new Project(data)
         await project.save()
         return project
     } catch (error) {
-        throw error        
+        throw error
     }
 }
 
@@ -371,7 +371,7 @@ async function getProjects() {
         const projects = await Project.find()
         return projects
     } catch (error) {
-        throw error        
+        throw error
     }
 }
 
@@ -380,7 +380,7 @@ app.get("/projects", verfiyJWT, async (req, res) => {
         const projects = await getProjects()
         return res.status(200).json({ message: "Projects fetched successfully", projects })
     } catch (error) {
-        res.status(500).json({ error: "Failed to fetch projects "})
+        res.status(500).json({ error: "Failed to fetch projects " })
         // console.log("Error while getting projects", error.message)
     }
 })
@@ -390,7 +390,7 @@ async function getProjectDetails(projectId) {
         const project = await Project.findById(projectId)
         return project
     } catch (error) {
-        throw error        
+        throw error
     }
 }
 
@@ -399,7 +399,7 @@ app.get("/project/:projectId", verfiyJWT, async (req, res) => {
         const project = await getProjectDetails(req.params.projectId)
         return res.status(200).json({ message: "Project fetched successfully", project })
     } catch (error) {
-        res.status(500).json({ error: "Failed to fetch project "})
+        res.status(500).json({ error: "Failed to fetch project " })
         // console.log("Error while getting projects", error.message)
     }
 })
@@ -418,18 +418,18 @@ app.delete("/project/:projectId", verfiyJWT, async (req, res) => {
         await deleteProject(req.params.projectId)
         res.status(200).json({ message: "Project deleted successfully" })
     } catch (error) {
-        res.status(500).json({ error: "Failed to delete project "})
+        res.status(500).json({ error: "Failed to delete project " })
     }
 })
 
 // add tag
-async function addTag (data) {
+async function addTag(data) {
     try {
         const tag = new Tag(data)
         await tag.save()
         return tag
     } catch (error) {
-        throw error        
+        throw error
     }
 }
 
@@ -438,7 +438,7 @@ app.post("/tags", verfiyJWT, async (req, res) => {
         const tag = await addTag(req.body)
         return res.status(201).json({ message: "Tag created successfully", tag })
     } catch (error) {
-        res.status(500).json({ error: "Failed to add tag"})
+        res.status(500).json({ error: "Failed to add tag" })
         // console.log("Error while creating tag", error.message)
     }
 })
@@ -449,7 +449,7 @@ async function getTags() {
         const tags = await Tag.find()
         return tags
     } catch (error) {
-        throw error        
+        throw error
     }
 }
 
@@ -464,7 +464,7 @@ app.get("/tags", verfiyJWT, async (req, res) => {
 })
 
 // reports
-async function getTasksCompletedLastWeek () {
+async function getTasksCompletedLastWeek() {
     try {
         const sevenDaysAgo = new Date()
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
@@ -475,11 +475,11 @@ async function getTasksCompletedLastWeek () {
     }
 }
 
-async function getTasksPendingLastWeek () {
+async function getTasksPendingLastWeek() {
     try {
         const sevenDaysAgo = new Date()
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-        const tasks = await Task.find({ status: { $ne: "Completed" } , updatedAt: { $gte: sevenDaysAgo } })
+        const tasks = await Task.find({ status: { $ne: "Completed" }, updatedAt: { $gte: sevenDaysAgo } })
         return tasks
     } catch (error) {
         throw error
@@ -492,13 +492,13 @@ app.get("/report/last-week", async (req, res) => {
         const pendingTasks = await getTasksPendingLastWeek()
         res.status(200).json({ message: "Tasks completed last week fetched successfully", tasks: { completedTasks: completedTasks.length, pendingTasks: pendingTasks.length } })
     } catch (error) {
-        res.status(500).json({ error: "Failed to get tasks completed last week" })        
+        res.status(500).json({ error: "Failed to get tasks completed last week" })
     }
 })
 
-async function getTotalDaysOfPendingWorkForAllTasks () {
+async function getTotalDaysOfPendingWorkForAllTasks() {
     try {
-        const pendingTasks = await Task.find({ status: { $ne: "Completed" }})
+        const pendingTasks = await Task.find({ status: { $ne: "Completed" } })
         const totalDays = pendingTasks.reduce((acc, curr) => acc + curr.timeToComplete, 0)
         return totalDays
     } catch (error) {
@@ -508,7 +508,7 @@ async function getTotalDaysOfPendingWorkForAllTasks () {
 
 async function getTotalDaysOfCompletedWorkForTasks() {
     try {
-        const completedTasks = await Task.find({ status: { $eq: "Completed" }})
+        const completedTasks = await Task.find({ status: { $eq: "Completed" } })
         const totalDays = completedTasks.reduce((acc, curr) => acc + curr.timeToComplete, 0)
         return totalDays
     } catch (error) {
@@ -522,17 +522,160 @@ app.get("/report/pending", async (req, res) => {
         const totalCompletedDays = await getTotalDaysOfCompletedWorkForTasks()
         res.status(200).json({ message: "Total days of pending work fetched successfully", total: { totalPendingDays, totalCompletedDays } })
     } catch (error) {
-        res.status(500).json({ error: "Failed to get total days of pending work" })        
+        res.status(500).json({ error: "Failed to get total days of pending work" })
     }
 })
 
 
-// app.get("/report/closed-tasks", async (req, res) => {
-//     try {
-        
-//     } catch (error) {
-        
-//     }
-// })
+app.get("/report/closed-tasks", async (req, res) => {
+    try {
+        const tasks = await Task.aggregate([
+            {
+                $match: { status: "Completed" }
+            },
+            {
+                $facet: {
+                    closedByTeam: [
+                        {
+                            $group: {
+                                _id: "$team",
+                                count: { $sum: 1 }
+                            }
+                        },
+                        {
+                            $lookup: {
+                                from: "teams",
+                                localField: "_id",
+                                foreignField: "_id",
+                                as: "team"
+                            }
+                        },
+                        { $unwind: "$team" }
+                    ],
+                    closedByOwners: [
+                        { $unwind: "$owners" },
+                        {
+                            $group: {
+                                _id: "$owners",
+                                count: { $sum: 1 }
+                            }
+                        },
+                        {
+                            $lookup: {
+                                from: "users",
+                                localField: "_id",
+                                foreignField: "_id",
+                                as: "owner"
+                            }
+                        },
+                        { $unwind: "$owner" }
+                    ],
+                    closedByProject: [
+                        {
+                            $group: {
+                                _id: "$project",
+                                count: { $sum: 1 }
+                            }
+                        },
+                        {
+                            $lookup: {
+                                from: "projects",
+                                localField: "_id",
+                                foreignField: "_id",
+                                as: "project"
+                            }
+                        },
+                        { $unwind: "$project" }
+                    ]
+                }
+            },
+        ]);
+
+        // const tasks = await Task.aggregate([
+        //     { $match: { status: "Completed" } },
+        //     {
+        //         $facet: {
+        //             closedByTeam: [
+        //                 {
+        //                     $group: {
+        //                         _id: "$team",
+        //                         count: { $sum: 1 }
+        //                     }
+        //                 },
+        //                 {
+        //                     $lookup: {
+        //                         from: "teams",
+        //                         localField: "_id",
+        //                         foreignField: "_id",
+        //                         as: "team"
+        //                     }
+        //                 },
+        //                 { $unwind: "$team" },
+        //                 {
+        //                     $project: {
+        //                         label: "$team.name",
+        //                         count: 1,
+        //                         _id: 0
+        //                     }
+        //                 }
+        //             ],
+        //             closedByOwners: [
+        //                 { $unwind: "$owners" },
+        //                 {
+        //                     $group: {
+        //                         _id: "$owners",
+        //                         count: { $sum: 1 }
+        //                     }
+        //                 },
+        //                 {
+        //                     $lookup: {
+        //                         from: "users",
+        //                         localField: "_id",
+        //                         foreignField: "_id",
+        //                         as: "owner"
+        //                     }
+        //                 },
+        //                 { $unwind: "$owner" },
+        //                 {
+        //                     $project: {
+        //                         label: "$owner.fullName",
+        //                         count: 1,
+        //                         _id: 0
+        //                     }
+        //                 }
+        //             ],
+        //             closedByProject: [
+        //                 {
+        //                     $group: {
+        //                         _id: "$project",
+        //                         count: { $sum: 1 }
+        //                     }
+        //                 },
+        //                 {
+        //                     $lookup: {
+        //                         from: "projects",
+        //                         localField: "_id",
+        //                         foreignField: "_id",
+        //                         as: "project"
+        //                     }
+        //                 },
+        //                 { $unwind: "$project" },
+        //                 {
+        //                     $project: {
+        //                         label: "$project.title",
+        //                         count: 1,
+        //                         _id: 0
+        //                     }
+        //                 }
+        //             ]
+        //         }
+        //     }
+        // ]);
+        res.status(200).json({ message: "Closed tasks report fetched successfully", tasks })
+    } catch (error) {
+        console.log("Error", error)
+        res.status(500).json({ error: "Failed to get closed tasks report" })
+    }
+})
 
 app.listen(PORT, () => console.log(`Listening on port ${PORT}`))
