@@ -463,6 +463,24 @@ app.get("/tags", verfiyJWT, async (req, res) => {
     }
 })
 
+// delete tag
+async function deleteTag(tagId) {
+    try {
+        await Tag.findByIdAndDelete(tagId)
+    } catch (error) {
+        throw error
+    }
+}
+
+app.delete("/tag/:tagId", verfiyJWT, async (req, res) => {
+    try {
+        await deleteTag(req.params.tagId)
+        res.status(200).json({ message: "Tag deleted successfully" })
+    } catch (error) {
+        res.status(500).json({ error: "Failed to delete tag " })
+    }
+})
+
 // reports
 async function getTasksCompletedLastWeek() {
     try {
