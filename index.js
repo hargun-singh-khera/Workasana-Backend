@@ -14,7 +14,7 @@ const Tag = require("./models/tag.model");
 const { connectDB } = require("./db/db.connect");
 
 const corsOptions = {
-    origin: ["https://taskzen-henna.vercel.app/", "http://localhost:5173"],
+    origin: ["https://taskzen-henna.vercel.app", "http://localhost:5173"],
     credentials: true,
     optionSuccessStatus: 200,
 }
